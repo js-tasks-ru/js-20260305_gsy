@@ -1,3 +1,9 @@
+// Default language tags.
+const locales = ['ru', 'en'];
+
+// Default sorting options.
+const options = {caseFirst: 'upper'};
+
 /**
  * sortStrings - sorts array of string by two criteria "asc" or "desc"
  * @param {string[]} arr - the array of strings
@@ -5,8 +11,6 @@
  * @returns {string[]}
  */
 export function sortStrings(arr, param = 'asc') {
-  const locales = ['ru', 'en'];
-  const options = {caseFirst: 'upper'};
   let order;
 
   switch (param) {
