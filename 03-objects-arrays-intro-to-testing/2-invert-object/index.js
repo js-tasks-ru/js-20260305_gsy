@@ -6,8 +6,8 @@
 export function invertObj(obj) {
   if (!(obj instanceof Object)) {return;}
 
-  obj = Object.entries(obj);
-  obj = obj.map(([key, val]) => [val, key]);
+  const ent = Object.entries(obj);
+  const inv = ent.map(([key, val]) => [val, key]);
 
-  return Object.fromEntries(obj);
+  return Object.fromEntries(inv);
 }
