@@ -6,7 +6,7 @@
 export function createGetter(path) {
   const keys = path.split('.');
 
-  return function(tree) {
+  return (tree) => {
     let result = tree;
 
     for (const key of keys) {
