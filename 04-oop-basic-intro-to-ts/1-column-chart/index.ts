@@ -130,14 +130,20 @@ export default class ColumnChart {
     return this;
   }
 
-  private updateData(data: number[]) {
-    const max = Math.max(...data);
-    const scale = this.chartHeight / max;
+  private updateData(data: number[]): this {
     const body = this.element?.querySelector<HTMLDivElement>('.column-chart__chart');
 
     if (!body) throw new Error('Wrong type of chart node');
 
     body.innerHTML = '';
+
+    if (!data.length) return this;
+
+    const max = Math.max(...data);
+
+    if (max <= 0) return this;
+
+    const scale = this.chartHeight / max;
 
     data.forEach((itm) => {
       const val = Math.floor(itm * scale) + '';
