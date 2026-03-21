@@ -78,7 +78,7 @@ export default class ColumnChart {
     return /* html */ `
       <div class="column-chart" style="--chart-height: ${this.chartHeight}">
         <div class="column-chart__title">
-          ___LABEL___
+          <span data-element="label">Label</span>
           <a href="123" class="column-chart__link">View all</a>
         </div>
         <div class="column-chart__container">
@@ -99,12 +99,11 @@ export default class ColumnChart {
   }
 
   private updateLabel(label: string) {
-    const ttl = this.element?.querySelector('.column-chart__title');
-    const txt = ttl?.firstChild;
+    const lbl = this.element?.querySelector('[data-element="label"]');;
 
-    if (!txt) throw new Error('Wrong type of text node');
+    if (!lbl) throw new Error('Wrong type of label node');
 
-    txt.textContent = label;
+    lbl.textContent = label;
 
     return this;
   }
