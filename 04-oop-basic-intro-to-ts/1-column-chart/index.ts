@@ -74,32 +74,34 @@ export default class ColumnChart {
   public destroy() {
     this.remove();
     this.element = null;
+    this.subElementsMap.clear();
 
     return this;
   }
 
+
   // PRIVATE PART =================================================================================
 
 
-  private subElement: Map<String, Element> = new Map()
+  private subElementsMap: Map<String, Element> = new Map()
 
 
-  private requireSubElement<E extends Element>(selector: string): E {
-    if (this.subElement.has(selector)) {
-      return this.subElement.get(selector) as E;
+  private requireSubElement<E extends HTMLElement>(selector: string): E {
+    if (this.subElementsMap.has(selector)) {
+      return this.subElementsMap.get(selector) as E;
     }
 
     if (this.element === null) {
       throw new Error('Root element has not been created');
     }
 
-    const elem = this.element?.querySelector<E>(selector);
+    const elem = this.element.querySelector<E>(selector);
 
     if (elem === null) {
       throw new Error('Nested element not found');
     }
 
-    this.subElement.set(selector, elem);
+    this.subElementsMap.set(selector, elem);
     return elem
   }
 
@@ -164,8 +166,8 @@ export default class ColumnChart {
     let scale = 0;
 
     if (data.length) max = Math.max(...data);
-    if (max > 0) scale = this.chartHeight / max;
-    if (scale === 0) body.innerHTML = '';
+    if (max) scale = this.chartHeight / max;
+    if (!scale) body.innerHTML = '';
     else {
       const bars = data.map((itm) => {
         const val = Math.floor(itm * scale) + '';
