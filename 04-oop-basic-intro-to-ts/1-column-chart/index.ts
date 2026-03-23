@@ -22,12 +22,15 @@ interface Options {
   formatHeading?: HeaderFormater
 }
 
+
 export default class ColumnChart {
   /** Элемент диаграммы в дереве DOM. */
   public element: HTMLElement | null;
 
+
   /** Высота диаграммы. */
   public chartHeight: number
+
 
   constructor({
     data = [],
@@ -45,9 +48,10 @@ export default class ColumnChart {
         .updateHeader(value, formatHeading);
   }
 
+
   /** Обновить тело графика. */
   public update(data: number[]) {
-    if (this.element === null) throw new Error('Element is not exist');
+    if (this.element === null) throw new Error('Root element has not been created');
 
     if (!data.length) this.element.classList.add(LoadingStyleClass);
     else this.element.classList.remove(LoadingStyleClass);
@@ -57,12 +61,14 @@ export default class ColumnChart {
     return this;
   }
 
+
   /** Удалить элемент компонента из DOM. */
   public remove() {
     this.element?.remove();
 
     return this;
   }
+
 
   /** Удалить компонент полностью и очистить память. */
   public destroy() {
@@ -74,12 +80,36 @@ export default class ColumnChart {
 
   // PRIVATE PART =================================================================================
 
+
+  private subElement: Map<String, Element> = new Map()
+
+
+  private requireSubElement<E extends Element>(selector: string): E {
+    if (this.subElement.has(selector)) {
+      return this.subElement.get(selector) as E;
+    }
+
+    if (this.element === null) {
+      throw new Error('Root element has not been created');
+    }
+
+    const elem = this.element?.querySelector<E>(selector);
+
+    if (elem === null) {
+      throw new Error('Nested element not found');
+    }
+
+    this.subElement.set(selector, elem);
+    return elem
+  }
+
+
   private createChartHTML(): string {
     return /* html */ `
       <div class="column-chart" style="--chart-height: ${this.chartHeight}">
         <div class="column-chart__title">
           <span data-element="label">Label</span>
-          <a href="123" class="column-chart__link">View all</a>
+          <a data-element="link" href="123" class="column-chart__link">View all</a>
         </div>
         <div class="column-chart__container">
           <div data-element="header" class="column-chart__header"></div>
@@ -88,6 +118,7 @@ export default class ColumnChart {
       </div>
     `;
   }
+
 
   private createBar(value: string, tooltip: string): HTMLDivElement {
     const bar = document.createElement('div');
@@ -98,20 +129,20 @@ export default class ColumnChart {
     return bar;
   }
 
-  private updateLabel(label: string) {
-    const lbl = this.element?.querySelector('[data-element="label"]');;
 
-    if (!lbl) throw new Error('Wrong type of label node');
+  private updateLabel(label: string) {
+    const sel = '[data-element="label"]';
+    const lbl = this.requireSubElement<HTMLDivElement>(sel);
 
     lbl.textContent = label;
 
     return this;
   }
 
-  private updateLink(path: string) {
-    const lnk = this.element?.querySelector<HTMLAnchorElement>('.column-chart__link');
 
-    if (!lnk) throw new Error('Wrong type of link node');
+  private updateLink(path: string) {
+    const sel = '[data-element="link"]';
+    const lnk = this.requireSubElement<HTMLAnchorElement>(sel);
 
     lnk.href = path || '';
     lnk.hidden = !path;
@@ -119,20 +150,20 @@ export default class ColumnChart {
     return this;
   }
 
-  private updateHeader(value: number, format: HeaderFormater) {
-    const hdr = this.element?.querySelector<HTMLDivElement>('.column-chart__header');
 
-    if (!hdr) throw new Error('Wrong type of header node');
+  private updateHeader(value: number, format: HeaderFormater) {
+    const sel = '[data-element="header"]';
+    const hdr = this.requireSubElement<HTMLDivElement>(sel);
 
     hdr.textContent = format(value);
 
     return this;
   }
 
-  private updateData(data: number[]): this {
-    const body = this.element?.querySelector<HTMLDivElement>('.column-chart__chart');
 
-    if (!body) throw new Error('Wrong type of chart node');
+  private updateData(data: number[]): this {
+    const sel = '[data-element="body"]';
+    const body = this.requireSubElement<HTMLDivElement>(sel);
 
     body.innerHTML = '';
 
