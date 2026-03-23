@@ -120,13 +120,8 @@ export default class ColumnChart {
   }
 
 
-  private createBar(value: string, tooltip: string): HTMLDivElement {
-    const bar = document.createElement('div');
-
-    bar.style.setProperty('--value', value);
-    bar.dataset.tooltip = tooltip;
-
-    return bar;
+  private createBarHTML(value: string, tooltip: string): string {
+    return `<div data-tooltip="${tooltip}" style="--value: ${value};"></div>`;
   }
 
 
@@ -165,21 +160,21 @@ export default class ColumnChart {
     const sel = '[data-element="body"]';
     const body = this.requireSubElement<HTMLDivElement>(sel);
 
-    body.innerHTML = '';
+    let max = 0;
+    let scale = 0;
 
-    if (!data.length) return this;
+    if (data.length) max = Math.max(...data);
+    if (max > 0) scale = this.chartHeight / max;
+    if (scale === 0) body.innerHTML = '';
+    else {
+      const bars = data.map((itm) => {
+        const val = Math.floor(itm * scale) + '';
+        const ttp = (itm / max * 100).toFixed(0) + '%';
+        return this.createBarHTML(val, ttp);
+      });
 
-    const max = Math.max(...data);
-
-    if (max <= 0) return this;
-
-    const scale = this.chartHeight / max;
-
-    data.forEach((itm) => {
-      const val = Math.floor(itm * scale) + '';
-      const ttp = (itm / max * 100).toFixed(0) + '%';
-      return body.append(this.createBar(val, ttp));
-    });
+      body.innerHTML = bars.join('');
+    }
 
     return this;
   }
