@@ -1,11 +1,183 @@
-import { createElement } from "../../../shared/utils/create-element";
+import { createElement } from "../../shared/utils/create-element";
 
+
+/** Функция форматирования заголовка диаграммы. */
+type HeaderFormater = (v: number) => string;
+
+
+/** Функция форматирования заголовка диаграммы по умолчанию. */
+const DefaultHeaderFormater: HeaderFormater = (v: number) => String(v);
+
+
+/** Стилевой класс для отображения состояния загрузки элемента. */
+const LoadingStyleClass: string = 'column-chart_loading';
+
+
+/** Параметры для создания новой диаграммы. */
 interface Options {
-
+  data?: number[]
+  link?: string
+  label?: string
+  value?: number
+  formatHeading?: HeaderFormater
 }
 
+
 export default class ColumnChart {
-  constructor({ }: Options = {}) {
-    
+  /** Элемент диаграммы в дереве DOM. */
+  public element: HTMLElement | null;
+
+
+  /** Высота диаграммы. */
+  public chartHeight: number
+
+
+  constructor({
+    data = [],
+    link = '',
+    label = '',
+    value = 0,
+    formatHeading = DefaultHeaderFormater,
+  }: Options = {}) {
+    this.chartHeight = 50;
+    this.element = createElement(this.createChartHTML());
+
+    this.update(data)
+        .updateLink(link)
+        .updateLabel(label)
+        .updateHeader(value, formatHeading);
+  }
+
+
+  /** Обновить тело графика. */
+  public update(data: number[]) {
+    if (this.element === null) throw new Error('Root element has not been created');
+
+    if (!data.length) this.element.classList.add(LoadingStyleClass);
+    else this.element.classList.remove(LoadingStyleClass);
+
+    this.updateData(data);
+
+    return this;
+  }
+
+
+  /** Удалить элемент компонента из DOM. */
+  public remove() {
+    this.element?.remove();
+
+    return this;
+  }
+
+
+  /** Удалить компонент полностью и очистить память. */
+  public destroy() {
+    this.remove();
+    this.element = null;
+    this.subElementsMap.clear();
+
+    return this;
+  }
+
+
+  // PRIVATE PART =================================================================================
+
+
+  private subElementsMap: Map<String, Element> = new Map()
+
+
+  private requireSubElement<E extends HTMLElement>(selector: string): E {
+    if (this.subElementsMap.has(selector)) {
+      return this.subElementsMap.get(selector) as E;
+    }
+
+    if (this.element === null) {
+      throw new Error('Root element has not been created');
+    }
+
+    const elem = this.element.querySelector<E>(selector);
+
+    if (elem === null) {
+      throw new Error('Nested element not found');
+    }
+
+    this.subElementsMap.set(selector, elem);
+    return elem
+  }
+
+
+  private createChartHTML(): string {
+    return /* html */ `
+      <div class="column-chart" style="--chart-height: ${this.chartHeight}">
+        <div class="column-chart__title">
+          <span data-element="label">Label</span>
+          <a data-element="link" href="123" class="column-chart__link">View all</a>
+        </div>
+        <div class="column-chart__container">
+          <div data-element="header" class="column-chart__header"></div>
+          <div data-element="body" class="column-chart__chart"></div>
+        </div>
+      </div>
+    `;
+  }
+
+
+  private createBarHTML(value: string, tooltip: string): string {
+    return `<div data-tooltip="${tooltip}" style="--value: ${value};"></div>`;
+  }
+
+
+  private updateLabel(label: string) {
+    const sel = '[data-element="label"]';
+    const lbl = this.requireSubElement<HTMLDivElement>(sel);
+
+    lbl.textContent = label;
+
+    return this;
+  }
+
+
+  private updateLink(path: string) {
+    const sel = '[data-element="link"]';
+    const lnk = this.requireSubElement<HTMLAnchorElement>(sel);
+
+    lnk.href = path || '';
+    lnk.hidden = !path;
+
+    return this;
+  }
+
+
+  private updateHeader(value: number, format: HeaderFormater) {
+    const sel = '[data-element="header"]';
+    const hdr = this.requireSubElement<HTMLDivElement>(sel);
+
+    hdr.textContent = format(value);
+
+    return this;
+  }
+
+
+  private updateData(data: number[]): this {
+    const sel = '[data-element="body"]';
+    const body = this.requireSubElement<HTMLDivElement>(sel);
+
+    let max = 0;
+    let scale = 0;
+
+    if (data.length) max = Math.max(...data);
+    if (max) scale = this.chartHeight / max;
+    if (!scale) body.innerHTML = '';
+    else {
+      const bars = data.map((itm) => {
+        const val = Math.floor(itm * scale) + '';
+        const ttp = (itm / max * 100).toFixed(0) + '%';
+        return this.createBarHTML(val, ttp);
+      });
+
+      body.innerHTML = bars.join('');
+    }
+
+    return this;
   }
 }
