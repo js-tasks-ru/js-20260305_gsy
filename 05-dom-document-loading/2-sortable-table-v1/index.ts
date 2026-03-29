@@ -1,6 +1,6 @@
 type SortOrder = 'asc' | 'desc';
 
-type SortDataType = 'string' | 'number';
+type SortType = 'string' | 'number';
 
 type RowData = Record<string, string | number>;
 
@@ -15,7 +15,7 @@ interface HeaderCellConfig {
   title: string
   order?: SortOrder
   sortable?: boolean
-  sortType?: SortDataType
+  sortType?: SortType
   template?: (value: string | number) => string;
 }
 
@@ -41,7 +41,7 @@ export default class SortableTable {
 
   constructor(header: HeaderConfig = [], data: TableData = []) {
     this.rows = structuredClone(data);
-    this.columns = structuredClone(header);
+    this.columns = header.map(c => ({...c}));
     this.createTable();
   }
 
@@ -69,31 +69,43 @@ export default class SortableTable {
 
     if (!column) return;
 
-    const compare = column.sortType === 'number' ?
-      this.compareByNumber.bind(this, order, field) :
-      this.compareByString.bind(this, order, field) ;
+    const type = column.sortType || 'string';
+    const comp = this.compareRows.bind(this, order, type, field);
 
-    this.rows.sort(compare);
+    this.rows.sort(comp);
     this.body.replaceChildren(this.createRows());
     this.updateHeaderSortArrow(field, order);
   }
 
-  private compareByNumber(order: SortOrder, key: string, a: any, b: any): number {
+  private compareRows(
+    order: SortOrder,
+    type: SortType,
+    key: keyof RowData,
+    a: RowData,
+    b: RowData,
+  ): number {
     const ord = order === 'asc' ? 1 : -1;
-    const v1 = Number(a[key]);
-    const v2 = Number(b[key]);
+    const v1 = a[key];
+    const v2 = b[key];
 
-    if (v1 > v2) return ord;
-    if (v1 < v2) return -ord
-    return 0;
-  }
+    switch (type) {
+      case 'string':
+        const s1 = String(v1);
+        const s2 = String(v2);
 
-  private compareByString(order: SortOrder, key: string, a: any, b: any): number {
-    const ord = order === 'asc' ? 1 : -1;
-    const v1 = String(a[key]);
-    const v2 = String(b[key]);
+        return s1.localeCompare(s2, ['ru', 'en'], {caseFirst: 'upper'}) * ord;
 
-    return v1.localeCompare(v2, ['ru', 'en'], {caseFirst: 'upper'}) * ord;
+      case 'number':
+        const n1 = Number(v1);
+        const n2 = Number(v2);
+
+        if (!isNaN(n1) && !isNaN(n2)) {
+          if (n1 > n2) return ord;
+          if (n1 < n2) return -ord;
+        }
+
+        return 0;
+    }
   }
 
   private updateHeaderSortArrow(field: string, order: SortOrder) {
