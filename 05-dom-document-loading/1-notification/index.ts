@@ -80,8 +80,8 @@ export default class NotificationMessage {
   public show(target: HTMLElement = document.body): void {
     if (!this.element) throw Error('No element');
 
+    clearTimeout(this.timerID);
     target.append(this.element);
-
     this.timerID = setTimeout(() => this.remove(), this.duration);
   }
 
