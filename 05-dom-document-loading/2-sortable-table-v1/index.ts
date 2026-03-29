@@ -40,8 +40,8 @@ export default class SortableTable {
 
 
   constructor(header: HeaderConfig = [], data: TableData = []) {
-    this.rows = JSON.parse(JSON.stringify(data));
-    this.columns = header.map(r => ({...r}));
+    this.rows = structuredClone(data);
+    this.columns = structuredClone(header);
     this.createTable();
   }
 
