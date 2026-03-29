@@ -175,7 +175,7 @@ export default class SortableTable {
     this.columns.forEach(column => {
       const key = column.id;
       const prp = data[key];
-      const val = column?.template?.(prp) || String(prp);
+      const val = column?.template?.(prp) ?? String(prp);
 
       row.append(this.createCell(val));
     });
